@@ -1,0 +1,62 @@
+rm(list = ls())
+library(ggplot2)
+library(dplyr)
+library(ggridges)
+library(viridis)
+data <- read.csv("SleepStudy.csv")
+glimpse(data)
+reduced_data <- data %>% select(AverageSleep,GPA,ClassYear,ClassesMissed,AlcoholUse,StressScore,DepressionScore,Happiness,AnxietyScore,Drinks,CognitionZscore)
+
+ggplot(data = reduced_data, aes(x = GPA, y = AlcoholUse)) + 
+  geom_violin(trim=FALSE, aes(fill = AlcoholUse))+
+  labs(title="Plot of GPA  by AlcoholUse", x= "AlcoholUse", y = "GPA") +
+  geom_boxplot(width = 0.1)+
+  coord_flip() +
+  xlab("GPA") +
+  ylab("AlcoholUse")
+
+
+reduced_data %>%
+ggplot(data = reduced_data, mapping = aes(x = GPA)) + 
+  geom_freqpoly(mapping = aes(colour = AlcoholUse), binwidth = 0.1) + 
+  labs(title = "GPA vs.AlcoholUse Frequency Plot")
+
+
+reduced_data %>%
+ggplot(aes(x=ClassYear, y=GPA)) +
+  geom_point(aes(color=AlcoholUse)) + 
+  geom_smooth(aes(color=AlcoholUse), se=FALSE) + 
+  labs(title = "GPA vs.ClassYear Plot")
+
+lm = lm(GPA ~., data = reduced_data)
+summary(lm)
+
+par(mfrow = c(2, 2))
+plot(lm)
+
+data2 <- na.omit(reduced_data)
+dim(reduced_data)
+regfit.full = regsubsets(GPA ~ ., data = data2,  nvmax = 9)
+summary(regfit.full)
+names(summary(regfit.full))
+
+plot(summary(regfit.full)$rsq,xlab= "number of variabels", ylab = "R_Square", Type = "l")
+plot(summary(regfit.full)$rss,xlab= "number of variabels", ylab = "Rss", Type = "l")
+
+which.max(summary(regfit.full)$adjr2)
+which.min(summary(regfit.full)$cp)
+which.min(summary(regfit.full)$BIC)
+
+regfit.fwd = regsubsets(GPA ~ ., data = reduced_data,  nvmax = 9, method = "forward")
+summary(regfit.fwd)
+plot(regfit.fwd,scale = "adjr2", main = "forward stepwise")
+coef(regfit.fwd, which.max(summary(regfit.fwd)$cp))
+
+regfit.bwd = regsubsets(GPA ~ ., data = reduced_data,  nvmax = 9, method = "backward")
+summary(regfit.bwd)
+plot(regfit.bwd,scale = "adjr2", main = "backward stepwise")
+coef(regfit.bwd, which.max(summary(regfit.bwd)$cp))
+
+last.model = lm(GPA ~AverageSleep+ClassYear+Drinks+ClassesMissed+StressScore+DepressionScore+AnxietyScore, data=data2
+)
+summary(last.model)
