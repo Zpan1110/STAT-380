@@ -1,0 +1,153 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+library(readxl)
+library(dbplyr)
+library(ggplot2)
+library(hrbrthemes)
+library(dplyr)
+library(tidyr)
+library(viridis)
+library(ggridges)
+library(ggstatsplot)
+library(palmerpenguins)
+library(corrplot)
+library(tidyverse)
+library(caret)
+library(leaps)
+library(MASS)
+```
+
+```{r}
+sleepstudy <- read.csv("Sleepstudy.csv")
+
+data1 <- sleepstudy %>% select(AverageSleep,GPA,ClassYear,
+    Drinks,ClassesMissed,AlcoholUse,StressScore,DepressionScore,Happiness,AnxietyScore)
+
+
+
+ggplot(data=sleepstudy, aes(x=GPA, group=AlcoholUse, fill=AlcoholUse)) +
+    geom_density(adjust=1.5, position="fill") +
+    theme_ipsum()
+
+ggplot(data=data1, aes(x=GPA, group=ClassYear, fill=ClassYear)) +
+    geom_density(adjust=1.5) +
+    theme_ipsum() +
+    facet_wrap(~ClassYear) +
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      axis.ticks.x=element_blank()
+    )
+
+ggplot(data=data1, aes(x=GPA, group=ClassYear, fill=ClassYear)) +
+    geom_density(adjust=1.5, alpha=.4) +
+    theme_ipsum()
+
+ggplot(data=data1, aes(x=GPA, y= AlcoholUse, fill= AlcoholUse)) +
+   xlim(1.6,4)+
+  geom_density_ridges() +
+  theme_ridges() + 
+  theme(legend.position = "none")
+
+ggplot(data=data1, aes(x=GPA, y= AlcoholUse, fill= ..x..)) +
+  geom_density_ridges_gradient(scale = 1, rel_min_height = 0.01) +
+  scale_fill_viridis(name = "Temp. [F]", option = "c") +
+  labs(title = 'aaaaaaaaaaa') +
+  theme_ipsum()+
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8))
+
+ggplot(data=data1, aes(AlcoholUse,GPA)) + geom_violin() +coord_flip() + # This switch X and Y axis and allows to get the horizontal version
+    xlab("") +
+    ylab("Assigned Probability (%)")
+
+
+```
+
+
+
+
+```{r}
+ggplot(data = data1, aes(x = AlcoholUse, y = GPA)) + 
+  geom_violin(trim=FALSE, aes(fill = AlcoholUse))+
+  labs(title="Plot of GAP  by AlcoholUse",x="AlcoholUse", y = "GPA") +
+  geom_boxplot(width = 0.1)+
+  coord_flip() +
+    xlab("GPA") +
+    ylab("AlcoholUse")
+
+ggplot(data=data1, aes(x=GPA, y= as.character(ClassYear), fill= ..x..)) +
+  geom_density_ridges_gradient(scale = 1, rel_min_height = 0.01) +
+  scale_fill_viridis(name = "Temp. [F]", option = "c") +
+  labs(title = 'Plot of GPA and Classyear', y = "ClassYear") +
+  theme_ipsum()+
+    theme(
+      legend.position="none",
+      panel.spacing = unit(0.1, "lines"),
+      strip.text.x = element_text(size = 8))
+
+
+data2 <- data1 %>%
+  select(-AlcoholUse,-ClassYear)%>%
+  scale()
+
+alcoholUse <- data1$AlcoholUse
+
+data2frame <- data.frame(data2)
+
+round(cor(data2frame),
+  digits = 3)
+
+
+corrplot(cor(data2frame),
+  method = "number",
+  type = "upper" # show only upper side
+)
+```
+
+
+
+```{r}
+data2 <- na.omit(data1)
+dim(data1)
+regfit.full = regsubsets(GPA ~ ., data = data2,  nvmax = 9)
+summary(regfit.full)
+names(summary(regfit.full))
+
+plot(summary(regfit.full)$rsq,xlab= "number of variabels", ylab = "R_Square", Type = "l")
+plot(summary(regfit.full)$rss,xlab= "number of variabels", ylab = "Rss", Type = "l")
+
+which.max(summary(regfit.full)$adjr2)
+which.min(summary(regfit.full)$cp)
+which.min(summary(regfit.full)$BIC)
+
+regfit.fwd = regsubsets(GPA ~ ., data = data2,  nvmax = 9, method = "forward")
+summary(regfit.fwd)
+plot(regfit.fwd,scale = "adjr2", main = "forward stepwise")
+coef(regfit.fwd, which.max(summary(regfit.fwd)$adjr2))
+
+regfit.bwd = regsubsets(GPA ~ ., data = data2,  nvmax = 9, method = "backward")
+summary(regfit.bwd)
+plot(regfit.bwd,scale = "adjr2", main = "backward stepwise")
+coef(regfit.bwd, which.max(summary(regfit.bwd)$adjr2))
+
+last.model = lm(GPA ~AverageSleep+ClassYear+Drinks+ClassesMissed+StressScore+DepressionScore+AnxietyScore, data=data2
+)
+summary(last.model)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
