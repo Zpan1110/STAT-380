@@ -1,2 +1,2 @@
 # STAT-380
-final presentation
+This project is about predicting Golf tournament performance based on players'historical personal score by using multiple linear regression.
